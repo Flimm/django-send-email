@@ -1,5 +1,7 @@
 # Email Command for Django
 
+[![PyPI version](https://badge.fury.io/py/django-send-email.svg)](https://badge.fury.io/py/django-send-email)
+
 This app provides a simple management command for sending emails using your Django settings from the command line.
 
 
