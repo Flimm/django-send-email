@@ -3,7 +3,6 @@ Management command to send email using Django settings
 """
 import os
 import sys
-from optparse import make_option
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -30,57 +29,66 @@ Cc: {cc_formatted}
 
 
 class Command(BaseCommand):
-    option_list = BaseCommand.option_list + (
-        make_option(
-            '--noinput',
+    help = 'Sends an email to the specified email addresses. \nMessage can be a string, filename or "-" to read from stdin.'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'subject',
+            help='The subject of the email being sent',
+        )
+        parser.add_argument(
+            'message',
+            help='The filename of the message being sent, or - to use STDIN as the message, or the message contents',
+        )
+        parser.add_argument(
+            'recipient',
+            nargs='+',
+            help='The recipient in the form of an email address, or ADMINS or MANAGERS',
+        )
+        parser.add_argument(
+            '--noinput', '--no-input',
             action='store_false',
             dest='interactive',
             default=True,
             help='Tells Django to NOT prompt the user for input of any kind.'
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '-f', '--from',
             dest='from_email',
             default=None,
             help='Email address to use to send emails from. Defaults to use settings.DEFAULT_FROM_EMAIL'
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '-r', '--raise-error',
             action='store_true',
             dest='fail_silently',
             default=False,
             help='Exceptions during the email sending process will be raised. Default to failing silently'
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '-n', '--noprefix',
             action='store_true',
             dest='noprefix',
             default=False,
             help='Disables email subject prefix. Default behavior is to prepend settings.EMAIL_SUBJECT_PREFIX'
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '-b', '--bcc',
             dest='bcc',
             default=None,
             help='Comma separated list of email addresses for BCC'
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '-c', '--cc',
             dest='cc',
             default=None,
             help='Comma separated list of email addresses for CC'
-        ),
-    )
-    args = '<subject> <message or file or "-"> <recipient1>...<recipientN>'
-    help = 'Sends an email to the specified email addresses. \nMessage can be a string, filename or "-" to read from stdin.'
+        )
 
-    def handle_send_mail(self, args, options):
+    def handle_send_mail(self, options):
         verbosity = int(options.get('verbosity', 1))
 
-        if len(args) < 3:
-            raise CommandError('Subject, message and at least one recipient are required')
-
-        (subject, message), recipients = args[:2], args[2:]
+        subject, message, recipients = options['subject'], options['message'], options['recipient']
 
         if os.path.isfile(message):
             # Read message from file
@@ -146,7 +154,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            self.handle_send_mail(args, options)
+            self.handle_send_mail(options)
         except KeyboardInterrupt:
             self.stderr.write('Operation cancelled.\n')
             sys.exit(1)
